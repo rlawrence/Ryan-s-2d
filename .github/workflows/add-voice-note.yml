@@ -16,7 +16,7 @@ on:
         required: false
         type: string
       source:
-        description: "Source application (e.g. whisper, otter)"
+        description: "Source application (e.g. whisper, apple-shortcuts)"
         required: false
         type: string
 
@@ -36,23 +36,31 @@ jobs:
           python-version: "3.12"
 
       - name: Save transcription
+        env:
+          TRANSCRIPTION: ${{ inputs.transcription }}
+          NOTE_TITLE: ${{ inputs.title }}
+          NOTE_TAGS: ${{ inputs.tags }}
+          NOTE_SOURCE: ${{ inputs.source }}
         run: |
-          ARGS=""
-          if [ -n "${{ inputs.title }}" ]; then
-            ARGS="$ARGS --title \"${{ inputs.title }}\""
+          ARGS=()
+          if [ -n "$NOTE_TITLE" ]; then
+            ARGS+=(--title "$NOTE_TITLE")
           fi
-          if [ -n "${{ inputs.tags }}" ]; then
-            ARGS="$ARGS --tags \"${{ inputs.tags }}\""
+          if [ -n "$NOTE_TAGS" ]; then
+            ARGS+=(--tags "$NOTE_TAGS")
           fi
-          if [ -n "${{ inputs.source }}" ]; then
-            ARGS="$ARGS --source \"${{ inputs.source }}\""
+          if [ -n "$NOTE_SOURCE" ]; then
+            ARGS+=(--source "$NOTE_SOURCE")
           fi
-          echo "${{ inputs.transcription }}" | eval python scripts/save_transcription.py --stdin $ARGS
+          printf '%s' "$TRANSCRIPTION" | python scripts/save_transcription.py --stdin "${ARGS[@]}"
 
       - name: Commit and push
+        env:
+          NOTE_TITLE: ${{ inputs.title }}
         run: |
           git config user.name "Voice Note Bot"
           git config user.email "voice-bot@users.noreply.github.com"
           git add voice-notes/
-          git commit -m "Add voice note: ${{ inputs.title || 'untitled' }}"
+          COMMIT_TITLE="${NOTE_TITLE:-untitled}"
+          git commit -m "Add voice note: $COMMIT_TITLE"
           git push

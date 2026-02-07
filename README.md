@@ -46,25 +46,17 @@ curl -X POST \
   }'
 ```
 
-### Option 3: Apple Shortcuts / iOS integration
+### Option 3: Apple Shortcuts / iOS (no third-party apps)
 
-1. Create a new Shortcut on your iPhone/Mac
-2. Add a **Dictate Text** action (or use the text from your STT app)
-3. Add a **Get Contents of URL** action:
-   - URL: `https://api.github.com/repos/rlawrence/Ryan-s-2d/actions/workflows/add-voice-note.yml/dispatches`
-   - Method: POST
-   - Headers: `Authorization: Bearer YOUR_GITHUB_TOKEN`, `Accept: application/vnd.github.v3+json`
-   - Request Body (JSON):
-     ```json
-     {
-       "ref": "main",
-       "inputs": {
-         "transcription": "[Dictated Text variable]",
-         "title": "Voice Note",
-         "source": "apple-shortcuts"
-       }
-     }
-     ```
+Dictate a voice note on your iPhone and send it directly to this repo using only built-in iOS features and the GitHub API. The Shortcut flow:
+
+```
+Dictate Text → Ask for Title → Build JSON → POST to GitHub API → Done
+```
+
+**[Full step-by-step setup guide →](docs/apple-shortcut-setup.md)**
+
+The guide covers token creation, building the Shortcut action-by-action, Siri activation, Action Button setup, and troubleshooting.
 
 ## Setup
 
@@ -99,10 +91,12 @@ Your transcribed text appears here as the body of the document.
 ## Project Structure
 
 ```
-voice-notes/          # All transcribed voice notes (markdown)
+voice-notes/               # All transcribed voice notes (markdown)
 scripts/
-  save_transcription.py  # Core script to save transcriptions
-  add-voice-note.sh      # Shell wrapper that auto-commits
+  save_transcription.py    # Core script to save transcriptions
+  add-voice-note.sh        # Shell wrapper that auto-commits
 .github/workflows/
-  add-voice-note.yml     # GitHub Actions workflow for remote intake
+  add-voice-note.yml       # GitHub Actions workflow for remote intake
+docs/
+  apple-shortcut-setup.md  # Step-by-step iOS Shortcut build guide
 ```
