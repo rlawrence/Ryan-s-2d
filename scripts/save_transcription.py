@@ -9,9 +9,11 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import re
 import sys
+import urllib.request
 from datetime import datetime
 
 VOICE_NOTES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "voice-notes")
@@ -26,13 +28,56 @@ def slugify(text: str) -> str:
     return text[:60].strip("-")
 
 
+def generate_title_openai(transcription: str) -> str | None:
+    """Use OpenAI API to generate a concise title for the transcription."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    body = json.dumps({
+        "model": "gpt-4o-mini",
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "Generate a short, concise title (3-6 words) that summarizes "
+                    "the following voice note transcription. Return ONLY the title "
+                    "text, no quotes, no punctuation at the end."
+                ),
+            },
+            {"role": "user", "content": transcription[:1000]},
+        ],
+        "max_tokens": 20,
+        "temperature": 0.3,
+    }).encode()
+
+    req = urllib.request.Request(
+        "https://api.openai.com/v1/chat/completions",
+        data=body,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+            title = data["choices"][0]["message"]["content"].strip().strip('"\'')
+            return title
+    except Exception:
+        return None
+
+
 def title_from_transcription(transcription: str, max_words: int = 6) -> str:
-    """Generate a title from the first few words of the transcription."""
+    """Generate a title: try OpenAI first, fall back to first words."""
+    ai_title = generate_title_openai(transcription)
+    if ai_title:
+        return ai_title
+
     words = transcription.strip().split()[:max_words]
     title = " ".join(words)
-    # Remove trailing punctuation
     title = title.rstrip(".,;:!?")
-    # Capitalize first letter of each word
     return title.title()
 
 

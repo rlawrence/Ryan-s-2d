@@ -41,6 +41,7 @@ jobs:
           NOTE_TITLE: ${{ inputs.title }}
           NOTE_TAGS: ${{ inputs.tags }}
           NOTE_SOURCE: ${{ inputs.source }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           ARGS=()
           if [ -n "$NOTE_TITLE" ]; then
@@ -52,15 +53,15 @@ jobs:
           if [ -n "$NOTE_SOURCE" ]; then
             ARGS+=(--source "$NOTE_SOURCE")
           fi
-          printf '%s' "$TRANSCRIPTION" | python scripts/save_transcription.py --stdin "${ARGS[@]}"
+          RESULT=$(printf '%s' "$TRANSCRIPTION" | python scripts/save_transcription.py --stdin "${ARGS[@]}")
+          echo "$RESULT"
+          echo "SAVED_FILE=$RESULT" >> "$GITHUB_ENV"
 
       - name: Commit and push
-        env:
-          NOTE_TITLE: ${{ inputs.title }}
         run: |
           git config user.name "Voice Note Bot"
           git config user.email "voice-bot@users.noreply.github.com"
           git add voice-notes/
-          COMMIT_TITLE="${NOTE_TITLE:-untitled}"
-          git commit -m "Add voice note: $COMMIT_TITLE"
+          FILENAME=$(basename "${SAVED_FILE#Saved: }" .md)
+          git commit -m "Add voice note: $FILENAME"
           git push
