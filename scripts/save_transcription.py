@@ -26,14 +26,23 @@ def slugify(text: str) -> str:
     return text[:60].strip("-")
 
 
+def title_from_transcription(transcription: str, max_words: int = 6) -> str:
+    """Generate a title from the first few words of the transcription."""
+    words = transcription.strip().split()[:max_words]
+    title = " ".join(words)
+    # Remove trailing punctuation
+    title = title.rstrip(".,;:!?")
+    # Capitalize first letter of each word
+    return title.title()
+
+
 def generate_filename(title: str | None, timestamp: datetime) -> str:
     """Generate a markdown filename from title and timestamp."""
     date_str = timestamp.strftime("%Y-%m-%d")
-    time_str = timestamp.strftime("%H%M%S")
     if title:
         slug = slugify(title)
         return f"{date_str}-{slug}.md"
-    return f"{date_str}-voice-note-{time_str}.md"
+    return f"{date_str}-voice-note-{timestamp.strftime('%H%M%S')}.md"
 
 
 def build_markdown(
@@ -78,6 +87,10 @@ def save_transcription(
     """Save a transcription as a markdown file. Returns the file path."""
     timestamp = datetime.now()
     tags = tags or []
+
+    # Auto-generate title from transcription if none provided
+    if not title:
+        title = title_from_transcription(transcription)
 
     os.makedirs(VOICE_NOTES_DIR, exist_ok=True)
 
