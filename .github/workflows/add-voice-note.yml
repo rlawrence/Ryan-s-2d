@@ -1,0 +1,58 @@
+name: Add Voice Note
+
+on:
+  workflow_dispatch:
+    inputs:
+      transcription:
+        description: "The transcribed text"
+        required: true
+        type: string
+      title:
+        description: "Title for the voice note (optional)"
+        required: false
+        type: string
+      tags:
+        description: "Comma-separated tags (optional)"
+        required: false
+        type: string
+      source:
+        description: "Source application (e.g. whisper, otter)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  add-voice-note:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Save transcription
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.title }}" ]; then
+            ARGS="$ARGS --title \"${{ inputs.title }}\""
+          fi
+          if [ -n "${{ inputs.tags }}" ]; then
+            ARGS="$ARGS --tags \"${{ inputs.tags }}\""
+          fi
+          if [ -n "${{ inputs.source }}" ]; then
+            ARGS="$ARGS --source \"${{ inputs.source }}\""
+          fi
+          echo "${{ inputs.transcription }}" | eval python scripts/save_transcription.py --stdin $ARGS
+
+      - name: Commit and push
+        run: |
+          git config user.name "Voice Note Bot"
+          git config user.email "voice-bot@users.noreply.github.com"
+          git add voice-notes/
+          git commit -m "Add voice note: ${{ inputs.title || 'untitled' }}"
+          git push
