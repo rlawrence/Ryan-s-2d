@@ -9,7 +9,7 @@ A Shortcut you can trigger by:
 - Saying "Hey Siri, save voice note"
 - Pressing the Action Button (iPhone 15 Pro and later)
 
-It will: dictate your speech → ask for an optional title → POST to the GitHub API → commit a markdown file to `voice-notes/`.
+It will: dictate your speech → POST to the GitHub API → a workflow commits a markdown file to `voice-notes/`.
 
 ---
 
@@ -32,7 +32,6 @@ It will: dictate your speech → ask for an optional title → POST to the GitHu
    - **Repository access**: Select **Only select repositories** → choose `Ryan-s-2d`
    - **Permissions**:
      - **Contents**: Read and Write
-     - **Actions**: Read and Write
 5. Click **Generate token**
 6. **Copy the token immediately** -- you won't be able to see it again
 
@@ -50,34 +49,7 @@ Open the **Shortcuts** app on your iPhone or Mac and tap **+** to create a new S
    - **Language**: English (or your preferred language)
    - **Stop Listening**: After Pause (this stops recording when you stop talking)
 
-### Action 2: Ask for Title (optional but recommended)
-
-1. Tap **+** to add another action
-2. Search for **Ask for Input** and add it
-3. Configure:
-   - **Question**: `Title for this voice note?`
-   - **Input Type**: Text
-   - **Default Answer**: (leave blank)
-
-> This lets you give each note a meaningful name. If you want to skip this and auto-name everything, you can omit this action.
-
-### Action 3: Set Variable -- Build JSON Body
-
-1. Tap **+** to add another action
-2. Search for **Text** and add the **Text** action
-3. Paste the following into the text field, using the variable picker to insert the magic variables:
-
-```
-{"ref":"main","inputs":{"transcription":"[Dictated Text]","title":"[Provided Input]","source":"apple-shortcuts"}}
-```
-
-To insert the variables correctly:
-- Tap where `[Dictated Text]` is → delete the placeholder text → tap the variable button above the keyboard → select **Dictated Text** (from Action 1)
-- Tap where `[Provided Input]` is → delete the placeholder text → tap the variable button → select **Provided Input** (from Action 2)
-
-> **Important**: If your dictation might contain quotes or special characters, add a **Replace Text** action before this step to escape double quotes (`"` → `\"`). See the Troubleshooting section below.
-
-### Action 4: Get Contents of URL (the API call)
+### Action 2: Get Contents of URL (the API call)
 
 1. Tap **+** to add another action
 2. Search for **Get Contents of URL** and add it
@@ -85,7 +57,7 @@ To insert the variables correctly:
 
 **URL:**
 ```
-https://api.github.com/repos/rlawrence/Ryan-s-2d/actions/workflows/add-voice-note.yml/dispatches
+https://api.github.com/repos/rlawrence/Ryan-s-2d/dispatches
 ```
 
 **Method:** `POST`
@@ -94,21 +66,32 @@ https://api.github.com/repos/rlawrence/Ryan-s-2d/actions/workflows/add-voice-not
 
 | Key | Value |
 |-----|-------|
-| `Authorization` | `Bearer ghp_YOUR_TOKEN_HERE` |
+| `Authorization` | `Bearer YOUR_TOKEN_HERE` |
 | `Accept` | `application/vnd.github.v3+json` |
-| `Content-Type` | `application/json` |
 
-> Replace `ghp_YOUR_TOKEN_HERE` with the token you generated in Step 1.
+> Replace `YOUR_TOKEN_HERE` with the token you generated in Step 1.
 
-**Request Body:** select **File** and set it to the **Text** variable from Action 3
+**Request Body:** select **JSON**
 
-> Why "File" instead of "JSON"? The Shortcuts JSON editor can mangle nested objects. Using "File" with a pre-built JSON string sends the payload exactly as written.
+Add these keys in the JSON editor:
 
-### Action 5: Show Notification (confirmation)
+| Key | Type | Value |
+|-----|------|-------|
+| `event_type` | Text | `voice-note` |
+| `client_payload` | Dictionary | *(tap to expand, then add keys below)* |
+
+Inside `client_payload`, add:
+
+| Key | Type | Value |
+|-----|------|-------|
+| `transcription` | Text | *(tap variable button → select **Dictated Text**)* |
+| `source` | Text | `apple-shortcuts` |
+
+### Action 3: Show Notification
 
 1. Tap **+** to add another action
 2. Search for **Show Notification** and add it
-3. Set the message to: `Voice note saved to GitHub!`
+3. Type the message: `Voice note saved to GitHub!`
 
 ---
 
@@ -146,17 +129,17 @@ When finished, your Shortcut should have these actions in order:
 ```
 1. Dictate Text
       ↓ (produces "Dictated Text")
-2. Ask for Input: "Title for this voice note?"
-      ↓ (produces "Provided Input")
-3. Text: {"ref":"main","inputs":{"transcription":"[Dictated Text]","title":"[Provided Input]","source":"apple-shortcuts"}}
-      ↓ (produces "Text")
-4. Get Contents of URL
-      URL: https://api.github.com/repos/rlawrence/Ryan-s-2d/actions/workflows/add-voice-note.yml/dispatches
+2. Get Contents of URL
+      URL: https://api.github.com/repos/rlawrence/Ryan-s-2d/dispatches
       Method: POST
-      Headers: Authorization: Bearer ghp_xxx, Accept: application/vnd.github.v3+json, Content-Type: application/json
-      Body: File → [Text]
+      Headers: Authorization: Bearer YOUR_TOKEN, Accept: application/vnd.github.v3+json
+      Body: JSON
+        event_type: "voice-note"
+        client_payload:
+          transcription: [Dictated Text]
+          source: "apple-shortcuts"
       ↓
-5. Show Notification: "Voice note saved to GitHub!"
+3. Show Notification: "Voice note saved to GitHub!"
 ```
 
 ---
@@ -165,53 +148,21 @@ When finished, your Shortcut should have these actions in order:
 
 1. Run the Shortcut
 2. Speak a test phrase like "This is a test voice note"
-3. Enter a title like "Test Note"
-4. Wait a few seconds for the notification
-5. Check the repo: go to **Actions** tab on GitHub and you should see a workflow run
-6. After the workflow completes (~30 seconds), a new markdown file will appear in `voice-notes/`
+3. Wait for the notification
+4. Check the repo: go to **Actions** tab on GitHub and you should see a workflow run
+5. After the workflow completes (~30 seconds), a new markdown file will appear in `voice-notes/`
 
-If the API returns a **204 No Content** response, that means it worked -- GitHub returns 204 for successful workflow dispatches.
+The API returns a **204 No Content** response on success -- this is normal.
 
 ---
 
 ## Troubleshooting
 
+### "Cannot parse response"
+This is normal! GitHub returns an empty 204 response on success. The notification will still show. If workflows aren't running, double-check your token permissions.
+
 ### "Couldn't communicate with a helper application"
-Your token may have expired or lack the right permissions. Generate a new one with **Contents: Read and Write** and **Actions: Read and Write**.
-
-### Workflow doesn't appear in the Actions tab
-Make sure the workflow file exists on the `main` branch. The `workflow_dispatch` trigger only works for workflows that are already on the target `ref` branch.
-
-### JSON errors from special characters in dictation
-Speech can include characters like quotes, newlines, or ampersands that break JSON. To handle this, add a **Replace Text** action between the Dictate and Text actions:
-
-1. Add **Replace Text** action
-   - Find: `"` (a double quote)
-   - Replace with: `\"` (escaped quote)
-   - Input: Dictated Text
-2. Add another **Replace Text** action
-   - Find: (a newline -- press Enter/Return in the field)
-   - Replace with: `\n` (literal backslash-n)
-   - Input: Updated Text
-3. In Action 3 (the Text/JSON action), use the output of the last Replace instead of the raw Dictated Text
+Your token may have expired or lack the right permissions. Generate a new one with **Contents: Read and Write** scoped to this repo.
 
 ### Rate limits
 GitHub allows 5,000 API requests per hour with a PAT. Even if you record 20 voice notes a day, you won't come close to this limit.
-
----
-
-## Simplified Version (no title prompt)
-
-If you want a one-tap, zero-input experience:
-
-```
-1. Dictate Text
-      ↓
-2. Text: {"ref":"main","inputs":{"transcription":"[Dictated Text]","source":"apple-shortcuts"}}
-      ↓
-3. Get Contents of URL (same config as above, Body: File → [Text])
-      ↓
-4. Show Notification: "Voice note saved!"
-```
-
-This skips the title prompt. Notes will be auto-named with the date and time (e.g. `2026-02-07-voice-note-143022.md`).
