@@ -1,0 +1,52 @@
+name: Process Voice Note
+
+on:
+  push:
+    paths:
+      - 'voice-notes/raw-*.md'
+
+permissions:
+  contents: write
+
+jobs:
+  process-note:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Find and process new raw files
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          git diff --name-only HEAD~1 HEAD -- 'voice-notes/raw-*.md' | while read -r raw_file; do
+            if [ ! -f "$raw_file" ]; then
+              continue
+            fi
+
+            TRANSCRIPTION=$(cat "$raw_file")
+
+            RESULT=$(printf '%s' "$TRANSCRIPTION" | python scripts/save_transcription.py --stdin --source "apple-shortcuts")
+            echo "$RESULT"
+
+            rm "$raw_file"
+          done
+
+      - name: Commit processed notes
+        run: |
+          git config user.name "Voice Note Bot"
+          git config user.email "voice-bot@users.noreply.github.com"
+          git add voice-notes/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Process voice notes: add titles and front matter"
+            git push
+          fi

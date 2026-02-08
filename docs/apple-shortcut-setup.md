@@ -1,6 +1,6 @@
 # Apple Shortcuts: Voice Note to GitHub
 
-This guide walks you through building an iOS/macOS Shortcut that captures your voice, transcribes it, and sends it straight to your GitHub repo as a markdown file -- no third-party apps or subscriptions required.
+Capture your voice on iPhone and send it to your GitHub repo as a markdown file -- no third-party apps required.
 
 ## What you'll end up with
 
@@ -9,7 +9,7 @@ A Shortcut you can trigger by:
 - Saying "Hey Siri, save voice note"
 - Pressing the Action Button (iPhone 15 Pro and later)
 
-It will: dictate your speech → POST to the GitHub API → a workflow commits a markdown file to `voice-notes/`.
+It will: dictate your speech → upload it to GitHub → a workflow adds the title and formatting.
 
 ---
 
@@ -47,20 +47,42 @@ Open the **Shortcuts** app on your iPhone or Mac and tap **+** to create a new S
 2. Search for **Dictate Text** and add it
 3. Configure:
    - **Language**: English (or your preferred language)
-   - **Stop Listening**: After Pause (this stops recording when you stop talking)
+   - **Stop Listening**: After Pause
 
-### Action 2: Get Contents of URL (the API call)
+### Action 2: Format Date
+
+1. Tap **+** to add another action
+2. Search for **Date** and add the **Date** action (this gets the current date)
+3. Tap **+** again, search for **Format Date** and add it
+4. Set **Date Format** to **Custom**
+5. Set the format string to: `yyyy-MM-dd-HHmmss`
+
+This produces a timestamp like `2026-02-07-143022` for the filename.
+
+### Action 3: Base64 Encode
+
+1. Tap **+** to add another action
+2. Search for **Base64 Encode** and add it
+3. Set the input to **Dictated Text** (from Action 1)
+4. Make sure **Encode** is selected (not Decode)
+5. Tap the action's output and set **Line Breaks** to **None**
+
+### Action 4: Get Contents of URL (upload the file)
 
 1. Tap **+** to add another action
 2. Search for **Get Contents of URL** and add it
-3. Configure each field:
+3. Configure:
 
 **URL:**
+Tap into the URL field and build it by typing and inserting variables:
 ```
-https://api.github.com/repos/rlawrence/Ryan-s-2d/dispatches
+https://api.github.com/repos/rlawrence/Ryan-s-2d/contents/voice-notes/raw-[Formatted Date].md
 ```
+- Type: `https://api.github.com/repos/rlawrence/Ryan-s-2d/contents/voice-notes/raw-`
+- Tap the variable button → select **Formatted Date** (from Action 2)
+- Type: `.md`
 
-**Method:** `POST`
+**Method:** `PUT`
 
 **Headers** (tap "Add new header" for each):
 
@@ -69,25 +91,18 @@ https://api.github.com/repos/rlawrence/Ryan-s-2d/dispatches
 | `Authorization` | `Bearer YOUR_TOKEN_HERE` |
 | `Accept` | `application/vnd.github.v3+json` |
 
-> Replace `YOUR_TOKEN_HERE` with the token you generated in Step 1.
+> Replace `YOUR_TOKEN_HERE` with the token from Step 1.
 
 **Request Body:** select **JSON**
 
-Add these keys in the JSON editor:
+Add these keys:
 
 | Key | Type | Value |
 |-----|------|-------|
-| `event_type` | Text | `voice-note` |
-| `client_payload` | Dictionary | *(tap to expand, then add keys below)* |
+| `message` | Text | `Add voice note via Shortcuts` |
+| `content` | Text | *(tap variable button → select **Base64 Encoded**)* |
 
-Inside `client_payload`, add:
-
-| Key | Type | Value |
-|-----|------|-------|
-| `transcription` | Text | *(tap variable button → select **Dictated Text**)* |
-| `source` | Text | `apple-shortcuts` |
-
-### Action 3: Show Notification
+### Action 5: Show Notification
 
 1. Tap **+** to add another action
 2. Search for **Show Notification** and add it
@@ -97,72 +112,76 @@ Inside `client_payload`, add:
 
 ## Step 3: Name and Configure the Shortcut
 
-1. Tap the dropdown arrow at the top (next to the Shortcut name)
-2. **Rename** it to `Save Voice Note`
+1. Tap the dropdown arrow at the top
+2. **Rename** to `Save Voice Note`
 3. Tap **Choose Icon** and pick a microphone icon
-4. Optional -- tap **Add to Home Screen** to create a one-tap launcher
+4. Optional -- tap **Add to Home Screen**
 
 ---
 
-## Step 4: Set Up Siri Trigger
+## Step 4: Siri Trigger
 
-1. In the Shortcut editor, tap the dropdown arrow at the top
-2. Tap **Rename** -- the name you set here is what you'll say to Siri
-3. With the name `Save Voice Note`, you can now say:
-   - "Hey Siri, Save Voice Note"
+With the name `Save Voice Note`, just say: **"Hey Siri, Save Voice Note"**
 
 ---
 
-## Step 5: Action Button Setup (iPhone 15 Pro+)
+## Step 5: Action Button (iPhone 15 Pro+)
 
 1. Go to **Settings** → **Action Button**
-2. Scroll to **Shortcut**
-3. Select **Save Voice Note**
-4. Now pressing and holding the Action Button will launch your voice note flow
+2. Scroll to **Shortcut** → select **Save Voice Note**
 
 ---
 
 ## Complete Shortcut Summary
 
-When finished, your Shortcut should have these actions in order:
-
 ```
 1. Dictate Text
       ↓ (produces "Dictated Text")
-2. Get Contents of URL
-      URL: https://api.github.com/repos/rlawrence/Ryan-s-2d/dispatches
-      Method: POST
-      Headers: Authorization: Bearer YOUR_TOKEN, Accept: application/vnd.github.v3+json
+2. Date → Format Date (custom: yyyy-MM-dd-HHmmss)
+      ↓ (produces "Formatted Date")
+3. Base64 Encode [Dictated Text]
+      ↓ (produces "Base64 Encoded")
+4. Get Contents of URL
+      URL: https://api.github.com/repos/rlawrence/Ryan-s-2d/contents/voice-notes/raw-[Formatted Date].md
+      Method: PUT
+      Headers: Authorization, Accept
       Body: JSON
-        event_type: "voice-note"
-        client_payload:
-          transcription: [Dictated Text]
-          source: "apple-shortcuts"
-      ↓
-3. Show Notification: "Voice note saved to GitHub!"
+        message: "Add voice note via Shortcuts"
+        content: [Base64 Encoded]
+      ↓ (returns 201 Created)
+5. Show Notification: "Voice note saved to GitHub!"
 ```
+
+---
+
+## How It Works
+
+1. The Shortcut dictates text, base64 encodes it, and uploads it directly to the repo as `voice-notes/raw-2026-02-07-143022.md`
+2. The push triggers a GitHub Actions workflow that:
+   - Reads the raw transcription
+   - Generates an AI title using OpenAI (if configured)
+   - Creates a formatted markdown file with YAML front matter
+   - Removes the raw file
+3. You end up with a clean voice note like `voice-notes/2026-02-07-grocery-run-and-dentist-call.md`
 
 ---
 
 ## Testing
 
 1. Run the Shortcut
-2. Speak a test phrase like "This is a test voice note"
-3. Wait for the notification
-4. Check the repo: go to **Actions** tab on GitHub and you should see a workflow run
-5. After the workflow completes (~30 seconds), a new markdown file will appear in `voice-notes/`
-
-The API returns a **204 No Content** response on success -- this is normal.
+2. Speak a test phrase
+3. You should get a notification (no "cannot parse response" -- this API returns a proper response!)
+4. Check the repo -- you'll see a `raw-*.md` file appear, then moments later the workflow processes it into a formatted note
 
 ---
 
 ## Troubleshooting
 
-### "Cannot parse response"
-This is normal! GitHub returns an empty 204 response on success. The notification will still show. If workflows aren't running, double-check your token permissions.
+### 422 "sha" is required / file already exists
+Two notes were saved in the same second. Try again -- the timestamp will be different.
 
 ### "Couldn't communicate with a helper application"
-Your token may have expired or lack the right permissions. Generate a new one with **Contents: Read and Write** scoped to this repo.
+Your token may have expired. Generate a new one with **Contents: Read and Write**.
 
-### Rate limits
-GitHub allows 5,000 API requests per hour with a PAT. Even if you record 20 voice notes a day, you won't come close to this limit.
+### Raw file appears but isn't processed
+Make sure the `process-voice-note.yml` workflow exists on the `main` branch and that you've added the `OPENAI_API_KEY` secret (optional -- titles will use first words as fallback).
