@@ -1,0 +1,43 @@
+name: Add Voice Note (Shortcuts)
+
+on:
+  repository_dispatch:
+    types: [voice-note]
+
+permissions:
+  contents: write
+
+jobs:
+  add-voice-note:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Save transcription
+        env:
+          TRANSCRIPTION: ${{ github.event.client_payload.transcription }}
+          NOTE_SOURCE: ${{ github.event.client_payload.source }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          ARGS=()
+          if [ -n "$NOTE_SOURCE" ]; then
+            ARGS+=(--source "$NOTE_SOURCE")
+          fi
+          RESULT=$(printf '%s' "$TRANSCRIPTION" | python scripts/save_transcription.py --stdin "${ARGS[@]}")
+          echo "$RESULT"
+          echo "SAVED_FILE=$RESULT" >> "$GITHUB_ENV"
+
+      - name: Commit and push
+        run: |
+          git config user.name "Voice Note Bot"
+          git config user.email "voice-bot@users.noreply.github.com"
+          git add voice-notes/
+          FILENAME=$(basename "${SAVED_FILE#Saved: }" .md)
+          git commit -m "Add voice note: $FILENAME"
+          git push
