@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   process-voice-note:
-    if: contains(github.event.issue.labels.*.name, 'voice-note') || startsWith(github.event.issue.title, 'Voice Note')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
