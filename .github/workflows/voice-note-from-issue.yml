@@ -1,0 +1,57 @@
+name: Process Voice Note from Issue
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  process-voice-note:
+    if: contains(github.event.issue.labels.*.name, 'voice-note') || startsWith(github.event.issue.title, 'Voice Note')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Save transcription
+        env:
+          TRANSCRIPTION: ${{ github.event.issue.body }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          RESULT=$(printf '%s' "$TRANSCRIPTION" | python scripts/save_transcription.py --stdin --source "apple-shortcuts")
+          echo "$RESULT"
+          echo "SAVED_FILE=$RESULT" >> "$GITHUB_ENV"
+
+      - name: Commit and push
+        run: |
+          git config user.name "Voice Note Bot"
+          git config user.email "voice-bot@users.noreply.github.com"
+          git add voice-notes/
+          FILENAME=$(basename "${SAVED_FILE#Saved: }" .md)
+          git commit -m "Add voice note: $FILENAME"
+          git push
+
+      - name: Close issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          FILENAME=$(basename "${SAVED_FILE#Saved: }")
+          curl -s -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/$ISSUE_NUMBER/comments" \
+            -d "{\"body\":\"Voice note saved as \`$FILENAME\`\"}"
+          curl -s -X PATCH \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/$ISSUE_NUMBER" \
+            -d '{"state":"closed"}'
