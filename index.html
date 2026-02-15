@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAE × EPIAS Explorer | Design in Tech Report 2026</title>
+<style>
+/* ========== CSS VARIABLES ========== */
+:root {
+  --bg: #0a0e17;
+  --bg2: #0f1520;
+  --surface: #151c2c;
+  --surface2: #1a2236;
+  --border: #253049;
+  --border-glow: rgba(99,140,255,0.15);
+  --text: #e2e8f4;
+  --text2: #a8b4cc;
+  --muted: #6b7a96;
+  --accent: #638cff;
+  --accent2: #8b5cf6;
+  --accent3: #06d6a0;
+  --accent4: #ff6b9d;
+  --danger: #ef4444;
+  --glass: rgba(21,28,44,0.75);
+  --glass-border: rgba(99,140,255,0.12);
+  --shadow: 0 8px 32px rgba(0,0,0,0.35);
+  --shadow-lg: 0 24px 64px rgba(0,0,0,0.4);
+  --radius: 12px;
+  --radius-lg: 20px;
+  /* Level colors */
+  --l0: #6b7a96;
+  --l1: #638cff;
+  --l2: #8b5cf6;
+  --l3: #06d6a0;
+  --l4: #ff6b9d;
+  --l5: #f59e0b;
+  --l0-bg: rgba(107,122,150,0.08);
+  --l1-bg: rgba(99,140,255,0.08);
+  --l2-bg: rgba(139,92,246,0.08);
+  --l3-bg: rgba(6,214,160,0.08);
+  --l4-bg: rgba(255,107,157,0.08);
+  --l5-bg: rgba(245,158,11,0.08);
+}
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --bg2: #f1f5f9;
+  --surface: #ffffff;
+  --surface2: #f1f5f9;
+  --border: #e2e8f0;
+  --border-glow: rgba(99,140,255,0.1);
+  --text: #1e293b;
+  --text2: #475569;
+  --muted: #94a3b8;
+  --glass: rgba(255,255,255,0.8);
+  --glass-border: rgba(99,140,255,0.15);
+  --shadow: 0 8px 32px rgba(0,0,0,0.08);
+  --shadow-lg: 0 24px 64px rgba(0,0,0,0.12);
+  --l0-bg: rgba(107,122,150,0.06);
+  --l1-bg: rgba(99,140,255,0.06);
+  --l2-bg: rgba(139,92,246,0.06);
+  --l3-bg: rgba(6,214,160,0.06);
+  --l4-bg: rgba(255,107,157,0.06);
+  --l5-bg: rgba(245,158,11,0.06);
+}
+
+/* ========== RESET & BASE ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background .4s, color .4s;
+  overflow-x: hidden;
+}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ========== AMBIENT BACKGROUND ========== */
+.ambient {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+.ambient-orb {
+  position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.12;
+  animation: float 20s ease-in-out infinite alternate;
+}
+.ambient-orb:nth-child(1) { width: 600px; height: 600px; background: var(--accent); top: -200px; left: -100px; }
+.ambient-orb:nth-child(2) { width: 500px; height: 500px; background: var(--accent2); bottom: -150px; right: -100px; animation-delay: -7s; }
+.ambient-orb:nth-child(3) { width: 400px; height: 400px; background: var(--accent3); top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: -14s; }
+@keyframes float {
+  0% { transform: translate(0,0) scale(1); }
+  50% { transform: translate(30px,-40px) scale(1.1); }
+  100% { transform: translate(-20px,30px) scale(0.95); }
+}
+[data-theme="light"] .ambient-orb { opacity: 0.06; }
+
+/* ========== LAYOUT ========== */
+.app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+
+/* ========== TOP BAR ========== */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.75rem 0; margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.topbar-left { display: flex; align-items: center; gap: 0.75rem; }
+.logo {
+  font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.logo-sub { font-size: 0.72rem; color: var(--muted); font-weight: 400; }
+.topbar-right { display: flex; align-items: center; gap: 0.5rem; }
+
+/* ========== BUTTONS ========== */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.45rem 0.85rem; border-radius: 8px;
+  font-size: 0.78rem; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text2); transition: all .2s;
+  white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface2); }
+.btn.active { border-color: var(--accent); background: rgba(99,140,255,0.1); color: var(--accent); }
+.btn svg { width: 15px; height: 15px; fill: currentColor; }
+.btn-icon {
+  width: 36px; height: 36px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text2); cursor: pointer;
+  transition: all .2s;
+}
+.btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+.btn-icon svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* ========== ROLE TOGGLE ========== */
+.role-toggle {
+  display: flex; border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; background: var(--surface);
+}
+.role-toggle button {
+  padding: 0.4rem 0.75rem; font-size: 0.72rem; font-weight: 500;
+  border: none; background: transparent; color: var(--muted);
+  cursor: pointer; transition: all .2s;
+}
+.role-toggle button.active {
+  background: var(--accent); color: white;
+}
+
+/* ========== HERO ========== */
+.hero {
+  text-align: center; padding: 2rem 1rem 2.5rem;
+}
+.hero h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800;
+  letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 0.75rem;
+}
+.hero h1 .gradient {
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent4));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p { color: var(--text2); font-size: 1rem; max-width: 600px; margin: 0 auto 1.5rem; line-height: 1.7; }
+.hero-stats {
+  display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;
+}
+.hero-stat {
+  text-align: center;
+}
+.hero-stat-value {
+  font-size: 1.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+}
+.hero-stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ========== DASHBOARD GRID ========== */
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+@media (max-width: 1100px) {
+  .dashboard { grid-template-columns: 1fr; }
+}
+
+/* ========== CARD ========== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color .3s, box-shadow .3s;
+}
+.card:hover { border-color: var(--border-glow); box-shadow: var(--shadow); }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+}
+.card-title { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+.card-body { padding: 1.25rem; }
+
+/* ========== MATRIX GRID ========== */
+.matrix-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.matrix {
+  display: grid;
+  grid-template-columns: 160px repeat(5, 1fr);
+  grid-template-rows: auto;
+  gap: 2px;
+  min-width: 700px;
+}
+.matrix-header {
+  background: var(--surface2);
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.03em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.matrix-header:hover { background: var(--accent); color: white; }
+.matrix-header.corner { cursor: default; background: transparent; }
+.matrix-header.corner:hover { background: transparent; color: var(--text2); }
+
+.matrix-level-label {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 0.6rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .2s;
+  min-height: 72px;
+}
+.matrix-level-label:hover { transform: translateX(2px); }
+.level-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.level-info { display: flex; flex-direction: column; }
+.level-name { font-size: 0.78rem; font-weight: 600; line-height: 1.3; }
+.level-role { font-size: 0.62rem; color: var(--muted); line-height: 1.3; margin-top: 1px; }
+
+/* ========== MATRIX CELLS ========== */
+.matrix-cell {
+  position: relative;
+  padding: 0.5rem;
+  border-radius: 8px;
+  min-height: 72px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all .25s;
+  border: 1px solid transparent;
+}
+.matrix-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.matrix-cell.checked {
+  border-color: var(--cell-color, var(--accent));
+}
+.matrix-cell.checked .cell-check {
+  background: var(--cell-color, var(--accent));
+  border-color: var(--cell-color, var(--accent));
+}
+.matrix-cell.checked .cell-check svg { opacity: 1; }
+.cell-check {
+  width: 22px; height: 22px; border-radius: 5px;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; flex-shrink: 0;
+}
+.cell-check svg { width: 13px; height: 13px; fill: white; opacity: 0; transition: opacity .2s; }
+.cell-text { font-size: 0.65rem; color: var(--muted); text-align: center; line-height: 1.35; }
+.matrix-cell.checked .cell-text { color: var(--text2); }
+
+/* Level-specific cell backgrounds */
+.matrix-cell[data-level="0"] { background: var(--l0-bg); --cell-color: var(--l0); }
+.matrix-cell[data-level="1"] { background: var(--l1-bg); --cell-color: var(--l1); }
+.matrix-cell[data-level="2"] { background: var(--l2-bg); --cell-color: var(--l2); }
+.matrix-cell[data-level="3"] { background: var(--l3-bg); --cell-color: var(--l3); }
+.matrix-cell[data-level="4"] { background: var(--l4-bg); --cell-color: var(--l4); }
+.matrix-cell[data-level="5"] { background: var(--l5-bg); --cell-color: var(--l5); }
+
+.matrix-level-label[data-level="0"] .level-dot { background: var(--l0); }
+.matrix-level-label[data-level="1"] .level-dot { background: var(--l1); }
+.matrix-level-label[data-level="2"] .level-dot { background: var(--l2); }
+.matrix-level-label[data-level="3"] .level-dot { background: var(--l3); }
+.matrix-level-label[data-level="4"] .level-dot { background: var(--l4); }
+.matrix-level-label[data-level="5"] .level-dot { background: var(--l5); }
+
+/* ========== SIDEBAR ========== */
+.sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+
+/* ========== RADAR CHART ========== */
+.radar-container {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0.5rem 0;
+}
+.radar-canvas { max-width: 100%; }
+
+/* ========== PROGRESS BAR ========== */
+.progress-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.progress-row {
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.progress-label {
+  width: 24px; font-size: 0.68rem; font-weight: 600;
+  font-family: 'JetBrains Mono', monospace; color: var(--muted); text-align: right;
+}
+.progress-track {
+  flex: 1; height: 8px; background: var(--bg2);
+  border-radius: 4px; overflow: hidden; position: relative;
+}
+.progress-fill {
+  height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1);
+  position: relative;
+}
+.progress-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15));
+}
+.progress-fill[data-level="0"] { background: var(--l0); }
+.progress-fill[data-level="1"] { background: var(--l1); }
+.progress-fill[data-level="2"] { background: var(--l2); }
+.progress-fill[data-level="3"] { background: var(--l3); }
+.progress-fill[data-level="4"] { background: var(--l4); }
+.progress-fill[data-level="5"] { background: var(--l5); }
+.progress-count {
+  width: 22px; font-size: 0.65rem; font-family: 'JetBrains Mono', monospace;
+  color: var(--muted); text-align: left;
+}
+
+/* ========== RESPONSIBILITY LADDER ========== */
+.ladder {
+  display: flex; flex-direction: column; gap: 0;
+}
+.ladder-step {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-left: 2px solid var(--border);
+  position: relative;
+  transition: all .3s;
+  cursor: pointer;
+}
+.ladder-step::before {
+  content: ''; position: absolute; left: -6px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--border);
+  transition: all .3s;
+}
+.ladder-step:hover::before { border-color: var(--accent); }
+.ladder-step.active { border-left-color: var(--step-color); }
+.ladder-step.active::before { background: var(--step-color); border-color: var(--step-color); }
+.ladder-step[data-level="0"] { --step-color: var(--l0); }
+.ladder-step[data-level="1"] { --step-color: var(--l1); }
+.ladder-step[data-level="2"] { --step-color: var(--l2); }
+.ladder-step[data-level="3"] { --step-color: var(--l3); }
+.ladder-step[data-level="4"] { --step-color: var(--l4); }
+.ladder-step[data-level="5"] { --step-color: var(--l5); }
+.ladder-verb {
+  font-size: 0.78rem; font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.ladder-step.active .ladder-verb { color: var(--step-color); }
+.ladder-desc { font-size: 0.68rem; color: var(--muted); }
+
+/* ========== ENVIRONMENT BADGES ========== */
+.env-badges {
+  display: flex; gap: 0.5rem; flex-wrap: wrap;
+}
+.env-badge {
+  flex: 1; min-width: 80px;
+  padding: 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  text-align: center;
+  transition: all .3s;
+  cursor: pointer;
+}
+.env-badge:hover { border-color: var(--accent); transform: translateY(-2px); }
+.env-badge.active { border-color: var(--env-color); background: var(--env-bg); }
+.env-badge-icon { font-size: 1.2rem; margin-bottom: 0.25rem; }
+.env-badge-name { font-size: 0.7rem; font-weight: 600; margin-bottom: 0.15rem; }
+.env-badge-level { font-size: 0.6rem; color: var(--muted); }
+.env-badge:nth-child(1) { --env-color: var(--l1); --env-bg: var(--l1-bg); }
+.env-badge:nth-child(2) { --env-color: var(--l3); --env-bg: var(--l3-bg); }
+.env-badge:nth-child(3) { --env-color: var(--l4); --env-bg: var(--l4-bg); }
+
+/* ========== DETAIL PANEL (SLIDE-OVER) ========== */
+.panel-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 999; opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.panel-overlay.active { opacity: 1; pointer-events: auto; }
+.panel {
+  position: fixed; top: 0; right: -480px; bottom: 0;
+  width: 480px; max-width: 100vw;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  z-index: 1000;
+  transition: right .35s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+.panel.active { right: 0; }
+.panel-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.panel-badge {
+  display: inline-block; font-size: 0.65rem; font-weight: 600;
+  padding: 0.2rem 0.6rem; border-radius: 4px;
+  margin-bottom: 0.4rem;
+}
+.panel-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
+.panel-subtitle { font-size: 0.78rem; color: var(--muted); }
+.panel-close {
+  width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-size: 1.2rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .2s;
+}
+.panel-close:hover { border-color: var(--accent); color: var(--text); }
+.panel-body {
+  flex: 1; overflow-y: auto; padding: 1.5rem;
+}
+.panel-section { margin-bottom: 1.5rem; }
+.panel-section-title {
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.6rem;
+}
+.panel-desc {
+  font-size: 0.88rem; line-height: 1.7; color: var(--text2);
+}
+.panel-tags {
+  display: flex; flex-wrap: wrap; gap: 0.35rem;
+}
+.panel-tag {
+  font-size: 0.65rem; padding: 0.2rem 0.5rem;
+  border-radius: 4px; border: 1px solid var(--border);
+  background: var(--bg2); color: var(--muted);
+}
+.panel-quote {
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--accent);
+  background: var(--bg2);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.82rem;
+  color: var(--text2);
+  font-style: italic;
+  line-height: 1.6;
+}
+.panel-metric-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+}
+.panel-metric {
+  padding: 0.6rem;
+  border-radius: 8px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+}
+.panel-metric-value {
+  font-size: 1rem; font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.panel-metric-label {
+  font-size: 0.62rem; color: var(--muted);
+}
+
+/* ========== MAXIM BANNER ========== */
+.maxim {
+  text-align: center; padding: 2rem 1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+}
+.maxim-text {
+  font-size: 1.1rem; font-weight: 600; color: var(--text2);
+  font-style: italic; max-width: 500px; margin: 0 auto 0.5rem;
+}
+.maxim-text em { color: var(--accent); font-style: normal; }
+.maxim-sub { font-size: 0.75rem; color: var(--muted); }
+
+/* ========== FOOTER ========== */
+.app-footer {
+  text-align: center; padding: 1.5rem 0; margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem; color: var(--muted);
+}
+.app-footer a { color: var(--accent); text-decoration: none; }
+.app-footer a:hover { text-decoration: underline; }
+
+/* ========== KEY INSIGHTS ========== */
+.insights {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem; margin-bottom: 2rem;
+}
+.insight-card {
+  padding: 1rem; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--surface);
+  transition: all .3s; cursor: default;
+}
+.insight-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow); }
+.insight-icon { font-size: 1.3rem; margin-bottom: 0.4rem; }
+.insight-title { font-size: 0.78rem; font-weight: 600; margin-bottom: 0.25rem; }
+.insight-text { font-size: 0.68rem; color: var(--muted); line-height: 1.5; }
+
+/* ========== RESET BTN ========== */
+.reset-row { display: flex; justify-content: center; padding: 0.5rem 0; }
+.reset-btn {
+  font-size: 0.68rem; color: var(--muted); background: none;
+  border: none; cursor: pointer; text-decoration: underline;
+  transition: color .2s;
+}
+.reset-btn:hover { color: var(--danger); }
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  animation: fadeInUp .5s ease forwards;
+  opacity: 0;
+}
+.animate-in:nth-child(1) { animation-delay: .05s; }
+.animate-in:nth-child(2) { animation-delay: .1s; }
+.animate-in:nth-child(3) { animation-delay: .15s; }
+.animate-in:nth-child(4) { animation-delay: .2s; }
+.animate-in:nth-child(5) { animation-delay: .25s; }
+.animate-in:nth-child(6) { animation-delay: .3s; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .app { padding: 1rem; }
+  .hero h1 { font-size: 1.6rem; }
+  .hero p { font-size: 0.88rem; }
+  .hero-stats { gap: 1.25rem; }
+  .matrix { min-width: 580px; grid-template-columns: 120px repeat(5, 1fr); }
+  .topbar { flex-wrap: wrap; }
+  .insights { grid-template-columns: 1fr 1fr; }
+  .panel { width: 100vw; }
+  .dashboard { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .hero h1 { font-size: 1.35rem; }
+  .matrix { min-width: 480px; grid-template-columns: 100px repeat(5, 1fr); }
+  .level-name { font-size: 0.68rem; }
+  .level-role { font-size: 0.55rem; }
+  .insights { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Ambient background -->
+<div class="ambient">
+  <div class="ambient-orb"></div>
+  <div class="ambient-orb"></div>
+  <div class="ambient-orb"></div>
+</div>
+
+<div class="app">
+  <!-- Top bar -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <span class="logo">SAE &times; EPIAS <span class="logo-sub">| Design in Tech 2026</span></span>
+    </div>
+    <div class="topbar-right">
+      <div class="role-toggle">
+        <button class="active" data-role="designer" onclick="setRole('designer')">Product Designer</button>
+        <button data-role="uxr" onclick="setRole('uxr')">UX Researcher</button>
+      </div>
+      <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" style="display:none"><path d="M12 17.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zm0 1.5a7 7 0 1 1 0-14 7 7 0 0 1 0 14zM12 2a.75.75 0 0 1 .75.75v2a.75.75 0 0 1-1.5 0v-2A.75.75 0 0 1 12 2zm0 17a.75.75 0 0 1 .75.75v2a.75.75 0 0 1-1.5 0v-2A.75.75 0 0 1 12 19zM22 12.75h-2a.75.75 0 0 0 0-1.5h2a.75.75 0 0 0 0 0zM4 12.75H2a.75.75 0 0 1 0-1.5h2a.75.75 0 0 1 0 1.5z"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27A7.014 7.014 0 0 1 12 19c-3.86 0-7-3.14-7-7 0-2.93 1.81-5.45 4.37-6.49zM12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.403 5.403 0 0 1-7.54-7.54c-.44-.06-.9-.1-1.36-.1z"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero animate-in">
+    <h1>Map Your <span class="gradient">AI Design Journey</span></h1>
+    <p>A two-axis framework for assessing and growing AI skills. Depth of judgment beats breadth of tooling &mdash; go deep before you go wide.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value" id="stat-checked">0</div>
+        <div class="hero-stat-label">Completed</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value" id="stat-total">30</div>
+        <div class="hero-stat-label">Total Cells</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value" id="stat-percent">0%</div>
+        <div class="hero-stat-label">Progress</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key insight cards -->
+  <div class="insights animate-in">
+    <div class="insight-card">
+      <div class="insight-icon">&#x1F3AF;</div>
+      <div class="insight-title">Responsibility Shifts</div>
+      <div class="insight-text">Levels are defined by who holds responsibility, not which tool you use.</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">&#x1F4CA;</div>
+      <div class="insight-title">Depth Over Breadth</div>
+      <div class="insight-text">A Steward at L1 is more valuable than an Explorer at L4.</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">&#x1F30D;</div>
+      <div class="insight-title">Three Environments</div>
+      <div class="insight-text">Assistive (moment) &rarr; Workspace (workflow) &rarr; Autonomous (rules).</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">&#x2705;</div>
+      <div class="insight-title">AI Is Helping If...</div>
+      <div class="insight-text">It reduces cognitive load, cycle time, rework, or improves consistency.</div>
+    </div>
+  </div>
+
+  <!-- Dashboard: Matrix + Sidebar -->
+  <div class="dashboard">
+    <!-- Main Matrix -->
+    <div class="card animate-in">
+      <div class="card-header">
+        <span class="card-title">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--accent)"><path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/></svg>
+          Gameboard Matrix
+        </span>
+        <span style="font-size:0.68rem;color:var(--muted)">Click cells to mark progress</span>
+      </div>
+      <div class="card-body">
+        <div class="matrix-wrapper">
+          <div class="matrix" id="matrix">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+        <div class="reset-row">
+          <button class="reset-btn" onclick="resetAll()">Reset all progress</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Radar Chart -->
+      <div class="card animate-in">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--accent2)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Skill Radar
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="radar-container">
+            <canvas id="radar" width="280" height="280" class="radar-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-level progress -->
+      <div class="card animate-in">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--accent3)"><path d="M4 20h16v2H4v-2zm1-4h2v3H5v-3zm4-3h2v6H9v-6zm4-3h2v9h-2v-9zm4-3h2v12h-2V7z"/></svg>
+            Level Progress
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="progress-section" id="level-progress">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Responsibility Ladder -->
+      <div class="card animate-in">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--accent4)"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg>
+            Responsibility Ladder
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="ladder" id="ladder">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Environment Types -->
+      <div class="card animate-in">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--l3)"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5V7z"/></svg>
+            Environment Types
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="env-badges" id="env-badges">
+            <div class="env-badge" data-env="assistive">
+              <div class="env-badge-icon">&#x1F4AC;</div>
+              <div class="env-badge-name">Assistive</div>
+              <div class="env-badge-level">L1-L2 &bull; "moment"</div>
+            </div>
+            <div class="env-badge" data-env="workspace">
+              <div class="env-badge-icon">&#x1F4BB;</div>
+              <div class="env-badge-name">Workspace</div>
+              <div class="env-badge-level">L3 &bull; "workflow"</div>
+            </div>
+            <div class="env-badge" data-env="autonomous">
+              <div class="env-badge-icon">&#x1F916;</div>
+              <div class="env-badge-name">Autonomous</div>
+              <div class="env-badge-level">L4 &bull; "rules"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Maxim -->
+  <div class="maxim animate-in">
+    <div class="maxim-text">"An <em>S-Steward at L1</em> is more valuable than an <em>E-Explorer at L4</em>."</div>
+    <div class="maxim-sub">Go deep before you go wide. &mdash; John Maeda, Design in Tech Report 2026</div>
+  </div>
+
+  <footer class="app-footer">
+    <p>Based on the <a href="https://github.com/aji-ai/dit-2026" target="_blank">SAE &times; EPIAS Framework</a> from the <a href="https://designintech.report" target="_blank">Design in Tech Report 2026</a> by John Maeda</p>
+  </footer>
+</div>
+
+<!-- Detail Panel -->
+<div class="panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-header">
+    <div>
+      <span class="panel-badge" id="panelBadge"></span>
+      <div class="panel-title" id="panelTitle"></div>
+      <div class="panel-subtitle" id="panelSubtitle"></div>
+    </div>
+    <button class="panel-close" onclick="closePanel()">&times;</button>
+  </div>
+  <div class="panel-body" id="panelBody">
+    <!-- Dynamic content -->
+  </div>
+</div>
+
+<script>
+// ========== DATA ==========
+const STAGES = ['Explorer', 'Practitioner', 'Integrator', 'Architect', 'Steward'];
+const STAGE_KEYS = ['E', 'P', 'I', 'A', 'S'];
+const STAGE_NUMS = ['\u2776', '\u2777', '\u2778', '\u2779', '\u277A'];
+
+const LEVELS = [
+  { id: 'L0', num: 'L0', name: 'No Automation', role: 'Classical Designer', tagline: 'Craft fundamentals', icon: '\uD83D\uDE97' },
+  { id: 'L1', num: 'L1', name: 'AI-Assisted', role: 'Marketing Designer \u00D7 AI', tagline: 'Better thinking', icon: '\uD83D\uDE97' },
+  { id: 'L2', num: 'L2', name: 'Partial Automation', role: 'Product Designer \u00D7 AI', tagline: 'Bigger thinking', icon: '\uD83D\uDE97' },
+  { id: 'L3', num: 'L3', name: 'Guided Automation', role: 'Design Engineer \u00D7 AI', tagline: 'Persistent workflows', icon: '\uD83D\uDE97' },
+  { id: 'L4', num: 'L4', name: 'Mostly Automated', role: 'Super Design Eng \u00D7 AI', tagline: 'Autonomous execution', icon: '\uD83D\uDE95' },
+  { id: 'L5', num: 'L5', name: 'Full Automation', role: 'AI \u00D7 AI', tagline: 'Goal-setting only', icon: '\u2728' },
+];
+
+const LADDER = [
+  { level: 0, verb: 'do', own: 'You own everything', desc: 'No AI involvement' },
+  { level: 1, verb: 'direct', own: 'You own every AI moment', desc: 'Human drives, AI assists' },
+  { level: 2, verb: 'assemble', own: 'You own every AI integration', desc: 'Human supervises bounded chunks' },
+  { level: 3, verb: 'approve', own: "You own the AI's checkpoints", desc: 'AI drives within conditions' },
+  { level: 4, verb: 'constrain', own: "You own the AI's rules", desc: 'AI drives in defined areas' },
+  { level: 5, verb: 'govern', own: "You own the AI's goals", desc: 'AI drives everywhere (theoretical)' },
+];
+
+// Cell data: [level][stage]
+const CELLS = {
+  designer: [
+    // L0
+    ['Learning craft basics', 'Consistent manual workflow', 'Decisions documented + QA', 'Reusable templates others use', 'Sets craft standards + mentors'],
+    // L1
+    ['Trying prompts + generators', 'Daily AI usage w/ saved prompts', 'AI across full task flow', 'Shared prompt libraries', 'Defines team AI usage rules'],
+    // L2
+    ['Testing app builders', 'Repeatable component outputs', 'Outputs fit tokens/layout/a11y', 'Prompt packs + component templates', 'Defines safe automation boundaries'],
+    // L3
+    ['Learning IDE + context rules', 'Multi-step runs w/ checkpoints', 'Human-AI approval model', 'Shared IDE workflows + evals', 'Org standards for context + safety'],
+    // L4
+    ['Testing agent pipelines', 'Reliable eval + retry patterns', 'Autonomous workflows w/ recovery', 'Production agent infrastructure', 'Defines autonomy governance'],
+    // L5
+    ['Exploring goal-based AI', 'Consistent approval gates', 'Exception-driven autonomy', 'Goal frameworks others trust', 'Org-wide AI governance'],
+  ],
+  uxr: [
+    // L0
+    ['Learning research basics', 'Consistent research practice', 'Documented research decisions', 'Reusable research templates', 'Sets research standards + mentors'],
+    // L1
+    ['Trying AI for synthesis', 'Daily AI in analysis workflow', 'AI across research pipeline', 'Shared analysis prompt library', 'Defines team research AI rules'],
+    // L2
+    ['Testing AI survey builders', 'Repeatable analysis outputs', 'Evidence integrity validated', 'Research template packs', 'Defines safe research automation'],
+    // L3
+    ['Learning IDE for research ops', 'Multi-step analysis pipelines', 'Human-AI review gates', 'Shared research workflows', 'Org standards for evidence + safety'],
+    // L4
+    ['Testing research agent pipelines', 'Reliable evidence eval patterns', 'Autonomous analysis w/ recovery', 'Production research infrastructure', 'Defines research autonomy governance'],
+    // L5
+    ['Exploring goal-based research AI', 'Consistent evidence approval', 'Exception-driven research', 'Trusted research frameworks', 'Enterprise research governance'],
+  ]
+};
+
+const CELL_DETAILS = {
+  // Level details
+  'L0': { desc: 'I do my design work without AI. I prefer doing things manually.', tools: ['Figma', 'Sketch', 'Pen & Paper', 'Paper Prototyping'], quote: 'Craft fundamentals still matter at every level.' },
+  'L1': { desc: 'I use AI to generate ideas, copy, or visuals, but I direct each step and manually verify and refine everything.', tools: ['ChatGPT', 'Microsoft Copilot', 'Midjourney', 'Figma Make', 'Adobe Firefly', 'DALL-E'], quote: 'AI helps you think, but you heavily curate.' },
+  'L2': { desc: 'I use AI app-builders and hybrid design-code canvases to generate bounded chunks from clear instructions, then I manually integrate and QA.', tools: ['Lovable', 'Bolt.new', 'v0', 'Framer AI', 'Replit', 'GitHub Spark'], quote: 'AI builds chunks, you assemble.' },
+  'L3': { desc: 'In my IDE, I run orchestrated multi-step workflows with context engineering, using subagents/skills/MCP tools with human-led QA checkpoints.', tools: ['VS Code + Copilot', 'Cursor', 'Codex', 'Claude in IDE'], quote: 'The most important transition for designers.' },
+  'L4': { desc: 'I operate advanced harnesses and eval suites. AI generates, refines, and QAs features end-to-end, with humans handling exceptions rather than execution.', tools: ['Claude Code CLI', 'Conductor', 'LangSmith', 'LangGraph', 'Braintrust'], quote: 'The harness becomes the workspace.' },
+  'L5': { desc: 'AI runs most of the workflow by default and self-corrects. I set goals, constraints, quality bar, and approval gates, then review outcomes.', tools: ['Aspirational', 'Not Yet Real', 'AGI Future'], quote: 'We are not there yet.' },
+  // Stage details
+  'E': { desc: 'Trying things; learning basics. Experimenting with new tools and techniques. Results are inconsistent but you\'re building foundational understanding.', career: 'Junior Designer' },
+  'P': { desc: 'Building consistent habits. Developed reliable workflows and predictable quality outputs through regular practice.', career: 'Designer / Mid-level' },
+  'I': { desc: 'Making it part of workflow. Skills embedded into end-to-end processes with validation, documentation, and decision points.', career: 'Senior Designer' },
+  'A': { desc: 'Building systems others use. Creating reusable frameworks, templates, and infrastructure that enable teammates.', career: 'Staff / Principal' },
+  'S': { desc: 'Setting standards; teaching others. Defining organizational norms, mentoring, and maintaining shared quality systems.', career: 'Director / Design Lead' },
+};
+
+// ========== STATE ==========
+let state = {
+  checked: {},
+  role: 'designer',
+  theme: 'dark',
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('sae-epias-state');
+    if (saved) state = { ...state, ...JSON.parse(saved) };
+  } catch(e) {}
+  const t = localStorage.getItem('sae-epias-theme');
+  if (t) state.theme = t;
+}
+
+function saveState() {
+  localStorage.setItem('sae-epias-state', JSON.stringify(state));
+  localStorage.setItem('sae-epias-theme', state.theme);
+}
+
+// ========== RENDER ==========
+function renderMatrix() {
+  const matrix = document.getElementById('matrix');
+  const cells = CELLS[state.role];
+  let html = '';
+
+  // Header row
+  html += '<div class="matrix-header corner"></div>';
+  STAGES.forEach((s, i) => {
+    html += `<div class="matrix-header" onclick="openStagePanel('${STAGE_KEYS[i]}')">${STAGE_NUMS[i]} ${s}</div>`;
+  });
+
+  // Data rows
+  LEVELS.forEach((lvl, li) => {
+    html += `<div class="matrix-level-label" data-level="${li}" onclick="openLevelPanel('${lvl.id}')">
+      <span class="level-dot"></span>
+      <span class="level-info">
+        <span class="level-name">${lvl.num}: ${lvl.name}</span>
+        <span class="level-role">${lvl.role}</span>
+      </span>
+    </div>`;
+
+    cells[li].forEach((text, si) => {
+      const key = `${li}-${si}`;
+      const checked = state.checked[key] ? 'checked' : '';
+      html += `<div class="matrix-cell ${checked}" data-level="${li}" data-cell="${key}" onclick="toggleCell('${key}')">
+        <span class="cell-check"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></span>
+        <span class="cell-text">${text}</span>
+      </div>`;
+    });
+  });
+
+  matrix.innerHTML = html;
+}
+
+function renderLevelProgress() {
+  const container = document.getElementById('level-progress');
+  let html = '';
+  LEVELS.forEach((lvl, li) => {
+    let count = 0;
+    for (let si = 0; si < 5; si++) {
+      if (state.checked[`${li}-${si}`]) count++;
+    }
+    const pct = (count / 5) * 100;
+    html += `<div class="progress-row">
+      <span class="progress-label">${lvl.num}</span>
+      <div class="progress-track">
+        <div class="progress-fill" data-level="${li}" style="width:${pct}%"></div>
+      </div>
+      <span class="progress-count">${count}/5</span>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderLadder() {
+  const container = document.getElementById('ladder');
+  // Determine highest level with any checks
+  let maxLevel = -1;
+  for (const key in state.checked) {
+    if (state.checked[key]) {
+      const lvl = parseInt(key.split('-')[0]);
+      if (lvl > maxLevel) maxLevel = lvl;
+    }
+  }
+
+  let html = '';
+  LADDER.forEach(step => {
+    const active = step.level <= maxLevel ? 'active' : '';
+    html += `<div class="ladder-step ${active}" data-level="${step.level}" onclick="openLevelPanel('L${step.level}')">
+      <span class="ladder-verb">${step.verb}</span>
+      <span class="ladder-desc">${step.own}</span>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderEnvBadges() {
+  // Highlight based on checked levels
+  let hasL1L2 = false, hasL3 = false, hasL4 = false;
+  for (const key in state.checked) {
+    if (!state.checked[key]) continue;
+    const lvl = parseInt(key.split('-')[0]);
+    if (lvl === 1 || lvl === 2) hasL1L2 = true;
+    if (lvl === 3) hasL3 = true;
+    if (lvl === 4) hasL4 = true;
+  }
+  document.querySelectorAll('.env-badge').forEach(b => {
+    const env = b.dataset.env;
+    b.classList.toggle('active',
+      (env === 'assistive' && hasL1L2) ||
+      (env === 'workspace' && hasL3) ||
+      (env === 'autonomous' && hasL4)
+    );
+  });
+}
+
+function updateStats() {
+  let total = 0;
+  for (const key in state.checked) if (state.checked[key]) total++;
+  document.getElementById('stat-checked').textContent = total;
+  document.getElementById('stat-percent').textContent = Math.round((total / 30) * 100) + '%';
+}
+
+function renderRadar() {
+  const canvas = document.getElementById('radar');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const size = 280;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  ctx.scale(dpr, dpr);
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const maxR = 110;
+  const levels = 6;
+  const slices = 5;
+  const angleStep = (Math.PI * 2) / slices;
+  const startAngle = -Math.PI / 2;
+
+  // Clear
+  ctx.clearRect(0, 0, size, size);
+
+  // Theme colors
+  const isDark = state.theme === 'dark';
+  const gridColor = isDark ? 'rgba(99,140,255,0.08)' : 'rgba(99,140,255,0.12)';
+  const gridLineColor = isDark ? 'rgba(99,140,255,0.12)' : 'rgba(99,140,255,0.18)';
+  const textColor = isDark ? '#6b7a96' : '#94a3b8';
+  const fillColor = isDark ? 'rgba(99,140,255,0.15)' : 'rgba(99,140,255,0.12)';
+  const strokeColor = isDark ? 'rgba(99,140,255,0.6)' : 'rgba(99,140,255,0.5)';
+  const dotColor = isDark ? '#638cff' : '#0969da';
+
+  // Grid rings
+  for (let i = 1; i <= levels; i++) {
+    const r = (maxR / levels) * i;
+    ctx.beginPath();
+    for (let j = 0; j <= slices; j++) {
+      const a = startAngle + angleStep * j;
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = gridColor;
+    ctx.fill();
+    ctx.strokeStyle = gridLineColor;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // Grid spokes
+  for (let j = 0; j < slices; j++) {
+    const a = startAngle + angleStep * j;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
+    ctx.strokeStyle = gridLineColor;
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // Labels
+  ctx.font = '500 10px Inter, sans-serif';
+  ctx.fillStyle = textColor;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  STAGES.forEach((s, i) => {
+    const a = startAngle + angleStep * i;
+    const lr = maxR + 20;
+    const x = cx + Math.cos(a) * lr;
+    const y = cy + Math.sin(a) * lr;
+    ctx.fillText(s.substring(0, 4), x, y);
+  });
+
+  // Compute data: for each EPIAS stage, find how many levels have that stage checked
+  const data = [];
+  for (let si = 0; si < 5; si++) {
+    let count = 0;
+    for (let li = 0; li < 6; li++) {
+      if (state.checked[`${li}-${si}`]) count++;
+    }
+    data.push(count);
+  }
+
+  // Draw data polygon
+  ctx.beginPath();
+  data.forEach((val, i) => {
+    const r = (maxR / levels) * val;
+    const a = startAngle + angleStep * i;
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Draw dots
+  data.forEach((val, i) => {
+    const r = (maxR / levels) * val;
+    const a = startAngle + angleStep * i;
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = dotColor;
+    ctx.fill();
+    ctx.strokeStyle = isDark ? '#151c2c' : '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function renderAll() {
+  renderMatrix();
+  renderLevelProgress();
+  renderLadder();
+  renderEnvBadges();
+  updateStats();
+  renderRadar();
+}
+
+// ========== INTERACTIONS ==========
+function toggleCell(key) {
+  state.checked[key] = !state.checked[key];
+  if (!state.checked[key]) delete state.checked[key];
+  saveState();
+  renderAll();
+}
+
+function resetAll() {
+  if (!confirm('Reset all progress? This cannot be undone.')) return;
+  state.checked = {};
+  saveState();
+  renderAll();
+}
+
+function setRole(role) {
+  state.role = role;
+  document.querySelectorAll('.role-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.role === role);
+  });
+  saveState();
+  renderAll();
+}
+
+function toggleTheme() {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', state.theme);
+  const sun = document.querySelector('.icon-sun');
+  const moon = document.querySelector('.icon-moon');
+  sun.style.display = state.theme === 'light' ? 'block' : 'none';
+  moon.style.display = state.theme === 'dark' ? 'block' : 'none';
+  saveState();
+  renderRadar();
+}
+
+// ========== PANEL ==========
+function openPanel() {
+  document.getElementById('panelOverlay').classList.add('active');
+  document.getElementById('panel').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closePanel() {
+  document.getElementById('panelOverlay').classList.remove('active');
+  document.getElementById('panel').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function openLevelPanel(levelId) {
+  const detail = CELL_DETAILS[levelId];
+  const levelIdx = parseInt(levelId.replace('L', ''));
+  const lvl = LEVELS[levelIdx];
+  if (!detail) return;
+
+  const badge = document.getElementById('panelBadge');
+  badge.textContent = lvl.num + ' \u2014 ' + lvl.name;
+  badge.style.background = `var(--l${levelIdx})`;
+  badge.style.color = 'white';
+
+  document.getElementById('panelTitle').textContent = lvl.role;
+  document.getElementById('panelSubtitle').textContent = lvl.tagline;
+
+  // Count checked for this level
+  let checkedCount = 0;
+  for (let si = 0; si < 5; si++) if (state.checked[`${levelIdx}-${si}`]) checkedCount++;
+
+  let bodyHtml = `
+    <div class="panel-section">
+      <div class="panel-section-title">Description</div>
+      <div class="panel-desc">${detail.desc}</div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-section-title">Key Quote</div>
+      <div class="panel-quote">${detail.quote}</div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-section-title">Your Progress</div>
+      <div class="panel-metric-grid">
+        <div class="panel-metric">
+          <div class="panel-metric-value" style="color:var(--l${levelIdx})">${checkedCount}/5</div>
+          <div class="panel-metric-label">Stages Complete</div>
+        </div>
+        <div class="panel-metric">
+          <div class="panel-metric-value">${Math.round(checkedCount/5*100)}%</div>
+          <div class="panel-metric-label">Level Mastery</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-section-title">Tools &amp; Environment</div>
+      <div class="panel-tags">${detail.tools.map(t => `<span class="panel-tag">${t}</span>`).join('')}</div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-section-title">Responsibility</div>
+      <div class="panel-desc">${LADDER[levelIdx].own}: <strong>${LADDER[levelIdx].verb}</strong></div>
+    </div>
+  `;
+
+  document.getElementById('panelBody').innerHTML = bodyHtml;
+  openPanel();
+}
+
+function openStagePanel(stageKey) {
+  const idx = STAGE_KEYS.indexOf(stageKey);
+  const detail = CELL_DETAILS[stageKey];
+  if (!detail) return;
+
+  const badge = document.getElementById('panelBadge');
+  badge.textContent = 'EPIAS Stage ' + (idx + 1);
+  badge.style.background = 'var(--accent2)';
+  badge.style.color = 'white';
+
+  document.getElementById('panelTitle').textContent = STAGES[idx];
+  document.getElementById('panelSubtitle').textContent = detail.career;
+
+  // Count checked for this stage across all levels
+  let checkedCount = 0;
+  for (let li = 0; li < 6; li++) if (state.checked[`${li}-${idx}`]) checkedCount++;
+
+  let bodyHtml = `
+    <div class="panel-section">
+      <div class="panel-section-title">Description</div>
+      <div class="panel-desc">${detail.desc}</div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-section-title">Career Parallel</div>
+      <div class="panel-quote">${detail.career}</div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-section-title">Your Coverage</div>
+      <div class="panel-metric-grid">
+        <div class="panel-metric">
+          <div class="panel-metric-value" style="color:var(--accent2)">${checkedCount}/6</div>
+          <div class="panel-metric-label">Levels Active</div>
+        </div>
+        <div class="panel-metric">
+          <div class="panel-metric-value">${Math.round(checkedCount/6*100)}%</div>
+          <div class="panel-metric-label">Coverage</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-section-title">Active At These Levels</div>
+      <div class="panel-tags">
+        ${LEVELS.map((l, li) => {
+          const active = state.checked[`${li}-${idx}`];
+          return `<span class="panel-tag" style="${active ? `background:var(--l${li});color:white;border-color:var(--l${li})` : ''}">${l.num}: ${l.name}</span>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('panelBody').innerHTML = bodyHtml;
+  openPanel();
+}
+
+// Close on Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+// ========== INIT ==========
+loadState();
+document.documentElement.setAttribute('data-theme', state.theme);
+if (state.theme === 'light') {
+  document.querySelector('.icon-sun').style.display = 'block';
+  document.querySelector('.icon-moon').style.display = 'none';
+}
+if (state.role === 'uxr') {
+  document.querySelectorAll('.role-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.role === 'uxr');
+  });
+}
+renderAll();
+
+// Re-render radar on resize
+window.addEventListener('resize', () => renderRadar());
+</script>
+
+</body>
+</html>
